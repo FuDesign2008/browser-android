@@ -1,5 +1,6 @@
 package com.example.fuyg.androidbrowser;
 
+import android.app.Activity;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -11,6 +12,7 @@ import android.text.TextWatcher;
 import android.util.Log;
 import android.view.GestureDetector;
 import android.view.Gravity;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MotionEvent;
@@ -82,16 +84,24 @@ public class MainActivity extends AppCompatActivity {
         homeButton = (Button) findViewById(R.id.home_button);
 
 
-        toolsPopupWindow = new ToolsPopupWindow(this,
-                getWindowManager().getDefaultDisplay().getWidth() - 30,
-                getWindowManager().getDefaultDisplay().getHeight() / 3
-        );
+
 
         // listeners
         buttonClickedListener = new ButtonClickedListener();
         webUrlInputChangedListener = new WebUrlInputChangedListener();
 
         // add listeners
+        webUrlInput.setOnKeyListener(new View.OnKeyListener() {
+            @Override
+            public boolean onKey(View view, int i, KeyEvent keyEvent) {
+                if (keyEvent.getAction() == KeyEvent.ACTION_UP && i == KeyEvent.KEYCODE_ENTER) {
+                    Log.d(TAG, "url on key enter: " + url);
+                    browser.loadUrl(url);
+                    return true;
+                }
+                return false;
+            }
+        });
         webUrlInput.addTextChangedListener(webUrlInputChangedListener);
         webUrlGoto.setOnClickListener(buttonClickedListener);
         webUrlCancel.setOnClickListener(buttonClickedListener);
@@ -257,6 +267,14 @@ public class MainActivity extends AppCompatActivity {
                     break;
 
                 case R.id.tools_button:
+                    if (toolsPopupWindow == null) {
+                        Activity activity = (Activity) view.getContext();
+                        toolsPopupWindow = new ToolsPopupWindow(activity,
+                                getWindowManager().getDefaultDisplay().getWidth() - 30,
+                                getWindowManager().getDefaultDisplay().getHeight() / 3
+                        );
+                    }
+
                     LayoutInflater toolsInflater = LayoutInflater.from(getApplicationContext());
                     View toolsView = toolsInflater.inflate(R.layout.tools, null);
                     toolsPopupWindow.showAtLocation(
@@ -271,6 +289,9 @@ public class MainActivity extends AppCompatActivity {
                     break;
                 case R.id.tools_normal_refresh:
                     browser.loadUrl(url);
+                    if (toolsPopupWindow != null) {
+                        toolsPopupWindow.dismiss();
+                    }
                     break;
             }
 
