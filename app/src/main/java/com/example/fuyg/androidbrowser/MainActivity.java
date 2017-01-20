@@ -335,8 +335,7 @@ public class MainActivity extends AppCompatActivity {
 
                 case R.id.tools_button:
                     if (toolsPopupWindow == null) {
-                        Activity activity = (Activity) view.getContext();
-                        toolsPopupWindow = new ToolsPopupWindow(activity,
+                        toolsPopupWindow = new ToolsPopupWindow(view.getContext(),
                                 getWindowManager().getDefaultDisplay().getWidth() - 30,
                                 getWindowManager().getDefaultDisplay().getHeight() / 3
                         );
@@ -363,10 +362,12 @@ public class MainActivity extends AppCompatActivity {
                 case R.id.web_url_show_favorite:
 
                     if (favoriteManager == null) {
-                        Activity activity = (Activity) view.getContext();
-                        favoriteManager = new FavoriteManager(activity);
+                        favoriteManager = new FavoriteManager(view.getContext());
                     }
                     favoriteManager.addFavorite(title, url);
+
+                    // for print log
+                    favoriteManager.getAllFavorites();
                     break;
                 case R.id.web_url_show_title:
                     changeStateOfWebUrlLayout(true);

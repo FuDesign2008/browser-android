@@ -27,6 +27,10 @@ public class FavoriteManager {
     }
 
     public boolean addFavorite(final String name, final String url) {
+        if (url == null || url.isEmpty() || name == null ||name.isEmpty()) {
+            return false;
+        }
+
         flag = false;
         database.transactionAround(false, new Callback() {
             @Override
@@ -57,6 +61,9 @@ public class FavoriteManager {
     }
 
     public boolean modifyFavorite(final String id, final String name, final String url) {
+        if (url == null || url.isEmpty() || name == null ||name.isEmpty()) {
+            return false;
+        }
         flag = false;
         database.transactionAround(false, new Callback() {
             @Override
