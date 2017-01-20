@@ -1,10 +1,11 @@
 package com.example.fuyg.androidbrowser;
 
 import android.app.Activity;
+import android.content.Context;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.IBinder;
 import android.os.Message;
-import android.support.annotation.BoolRes;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.text.Editable;
@@ -17,6 +18,7 @@ import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.webkit.URLUtil;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
@@ -26,6 +28,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 public class MainActivity extends AppCompatActivity {
@@ -44,25 +47,37 @@ public class MainActivity extends AppCompatActivity {
     private WebSettings settings;
     private BrowserClient client;
     private BrowserChromeClient chromeClient;
+
     // url input layout
+    private LinearLayout webUrlLayoutInput;
     private EditText webUrlInput;
     private Button webUrlGoto;
     private Button webUrlCancel;
     private ProgressBar progressBar;
-    private LinearLayout webUrlLayout;
-    // toolbar buttons
+
+
+    // url and search bar
+    private LinearLayout webUrlLayoutShow;
+    private Button webUrlFavorite;
+    private TextView webUrlTitle;
+
+    // bottom toolbar
     private Button prevButton;
     private Button nextButton;
     private Button toolsButton;
     private Button windowButton;
     private Button homeButton;
+
+
     private ButtonClickedListener buttonClickedListener;
     private WebUrlInputChangedListener webUrlInputChangedListener;
     private GestureDetector gestureDetector;
     private GestureListener gestureListener;
-    private WebViewTouchListener webViewTouchListener;
     private ToolsPopupWindow toolsPopupWindow;
+
     private String url = "";
+    private String title = "";
+    private FavoriteManager favoriteManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -70,27 +85,27 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         browser = (WebView) findViewById(R.id.browser);
+        settings = browser.getSettings();
+        client = new BrowserClient();
+        browser.setWebViewClient(client);
+        chromeClient = new BrowserChromeClient();
+        browser.setWebChromeClient(chromeClient);
+        gestureListener = new GestureListener();
+        gestureDetector = new GestureDetector(this, gestureListener);
+        browser.setOnTouchListener(new WebViewTouchListener());
+        settings.setDefaultTextEncodingName("UTF-8");
+        settings.setJavaScriptEnabled(true);
 
+        buttonClickedListener = new ButtonClickedListener();
+        webUrlInputChangedListener = new WebUrlInputChangedListener();
+
+        // web url input bar
         webUrlInput = (EditText) findViewById(R.id.web_url_input);
         webUrlGoto = (Button) findViewById(R.id.web_url_goto);
         webUrlCancel = (Button) findViewById(R.id.web_url_cancel);
         progressBar = (ProgressBar) findViewById(R.id.web_progress_bar);
-        webUrlLayout = (LinearLayout) findViewById(R.id.web_url_layout);
+        webUrlLayoutInput = (LinearLayout) findViewById(R.id.web_url_layout);
 
-        prevButton = (Button) findViewById(R.id.prev_button);
-        nextButton = (Button) findViewById(R.id.next_button);
-        toolsButton = (Button) findViewById(R.id.tools_button);
-        windowButton = (Button) findViewById(R.id.window_button);
-        homeButton = (Button) findViewById(R.id.home_button);
-
-
-
-
-        // listeners
-        buttonClickedListener = new ButtonClickedListener();
-        webUrlInputChangedListener = new WebUrlInputChangedListener();
-
-        // add listeners
         webUrlInput.setOnKeyListener(new View.OnKeyListener() {
             @Override
             public boolean onKey(View view, int i, KeyEvent keyEvent) {
@@ -102,33 +117,59 @@ public class MainActivity extends AppCompatActivity {
                 return false;
             }
         });
+        webUrlInput.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            @Override
+            public void onFocusChange(View v, boolean hasFocus) {
+                Log.d(TAG, "web url input id: " + webUrlInput.getId());
+                Log.d(TAG, "focus changed: " + v.getId() + " " + hasFocus);
+                if (!hasFocus) {
+                    changeStateOfWebUrlLayout(false);
+                }
+            }
+        });
         webUrlInput.addTextChangedListener(webUrlInputChangedListener);
         webUrlGoto.setOnClickListener(buttonClickedListener);
         webUrlCancel.setOnClickListener(buttonClickedListener);
+
+        // web url and search bar
+        webUrlLayoutShow = (LinearLayout) findViewById(R.id.web_url_layout_normal);
+        webUrlFavorite = (Button) findViewById(R.id.web_url_show_favorite);
+        webUrlTitle = (TextView) findViewById(R.id.web_url_show_title);
+        webUrlFavorite.setOnClickListener(buttonClickedListener);
+        webUrlTitle.setOnClickListener(buttonClickedListener);
+
+        // bottom toolbar
+        prevButton = (Button) findViewById(R.id.prev_button);
+        nextButton = (Button) findViewById(R.id.next_button);
+        toolsButton = (Button) findViewById(R.id.tools_button);
+        windowButton = (Button) findViewById(R.id.window_button);
+        homeButton = (Button) findViewById(R.id.home_button);
+
         prevButton.setOnClickListener(buttonClickedListener);
         nextButton.setOnClickListener(buttonClickedListener);
         toolsButton.setOnClickListener(buttonClickedListener);
         windowButton.setOnClickListener(buttonClickedListener);
         homeButton.setOnClickListener(buttonClickedListener);
 
-        // gesture
-        gestureListener = new GestureListener();
-        gestureDetector = new GestureDetector(this, gestureListener);
-        webViewTouchListener = new WebViewTouchListener();
 
-        settings = browser.getSettings();
-        client = new BrowserClient();
-        browser.setWebViewClient(client);
-        chromeClient = new BrowserChromeClient();
-        browser.setWebChromeClient(chromeClient);
-        browser.setOnTouchListener(webViewTouchListener);
-
-        settings.setDefaultTextEncodingName("UTF-8");
-        settings.setJavaScriptEnabled(true);
-//        browser.loadUrl(HOME_PAGE);
 
     }
 
+    private void changeStateOfWebUrlLayout(boolean showInput) {
+
+        if (showInput) {
+            webUrlLayoutInput.setVisibility(View.VISIBLE);
+            webUrlLayoutShow.setVisibility(View.GONE);
+            webUrlInput.requestFocus();
+            showSoftKeyboard(webUrlInput);
+
+        } else {
+            webUrlInput.clearFocus();
+            webUrlLayoutInput.setVisibility(View.GONE);
+            webUrlLayoutShow.setVisibility(View.VISIBLE);
+            hideSoftKeyboard();
+        }
+    }
 
     private void changeStateOfWebGoto(boolean showGoto) {
         if (showGoto) {
@@ -140,9 +181,22 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void changeStateOfToolbar() {
+
+    private void changeStateOfBottomToolbar() {
         prevButton.setEnabled(browser.canGoBack());
         nextButton.setEnabled(browser.canGoForward());
+    }
+
+    private boolean showSoftKeyboard(View targetView) {
+        Log.d(TAG, "show soft keyboard");
+        InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+        return imm.showSoftInput(targetView, InputMethodManager.SHOW_FORCED);
+    }
+
+    private boolean hideSoftKeyboard() {
+        Log.d(TAG, "hide soft keyboard");
+        InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+        return imm.hideSoftInputFromWindow(getWindow().getDecorView().getWindowToken(), 0);
     }
 
     @Override
@@ -150,6 +204,8 @@ public class MainActivity extends AppCompatActivity {
         getMenuInflater().inflate(R.menu.main, menu);
         return true;
     }
+
+
 
     @Override
     public void onBackPressed() {
@@ -186,9 +242,12 @@ public class MainActivity extends AppCompatActivity {
 
             switch (errorCode) {
                 case WebViewClient.ERROR_HOST_LOOKUP:
-                    url = "http://www.baidu.com/baidu?word=" + url;
-                    Log.d(TAG, "error, redirect to: " + url);
-                    browser.loadUrl(url);
+                    if (!failingUrl.startsWith("http://www.baidu.com")) {
+                        url = "http://www.baidu.com/baidu?word=" + failingUrl;
+                        Log.d(TAG, "error, redirect to: " + url);
+                        browser.loadUrl(url);
+                    }
+
                     break;
                 case WebViewClient.ERROR_UNSUPPORTED_AUTH_SCHEME:
                     new AlertDialog.Builder(MainActivity.this).setTitle("警告")
@@ -204,9 +263,10 @@ public class MainActivity extends AppCompatActivity {
             super.onPageFinished(view, url);
 
             webUrlInput.setText(url);
-            webUrlLayout.setVisibility(View.GONE);
+            webUrlLayoutInput.setVisibility(View.GONE);
+            webUrlLayoutShow.setVisibility(View.GONE);
 
-            changeStateOfToolbar();
+            changeStateOfBottomToolbar();
         }
     }
 
@@ -233,6 +293,13 @@ public class MainActivity extends AppCompatActivity {
                 progressBar.setVisibility(View.VISIBLE);
                 progressBar.setProgress(newProgress);
             }
+        }
+
+        @Override
+        public void onReceivedTitle(WebView view, String title) {
+            super.onReceivedTitle(view, title);
+            MainActivity.this.title = title;
+            webUrlTitle.setText(title);
         }
     }
 
@@ -293,6 +360,17 @@ public class MainActivity extends AppCompatActivity {
                         toolsPopupWindow.dismiss();
                     }
                     break;
+                case R.id.web_url_show_favorite:
+
+                    if (favoriteManager == null) {
+                        Activity activity = (Activity) view.getContext();
+                        favoriteManager = new FavoriteManager(activity);
+                    }
+                    favoriteManager.addFavorite(title, url);
+                    break;
+                case R.id.web_url_show_title:
+                    changeStateOfWebUrlLayout(true);
+                    break;
             }
 
         }
@@ -332,10 +410,11 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public boolean onFling(MotionEvent motionEvent, MotionEvent motionEvent1, float v, float v1) {
             Log.d(TAG, "on fling, scrollY : " + browser.getScrollY());
+            webUrlLayoutInput.setVisibility(View.GONE);
             if (browser.getScrollY() <= 0) {
-                webUrlLayout.setVisibility(View.VISIBLE);
+                webUrlLayoutShow.setVisibility(View.VISIBLE);
             } else {
-                webUrlLayout.setVisibility(View.GONE);
+                webUrlLayoutShow.setVisibility(View.GONE);
             }
             return true;
         }
