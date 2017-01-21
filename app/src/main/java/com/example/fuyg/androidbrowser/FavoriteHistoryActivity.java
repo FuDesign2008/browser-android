@@ -3,6 +3,7 @@ package com.example.fuyg.androidbrowser;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.view.Gravity;
@@ -51,6 +52,8 @@ public class FavoriteHistoryActivity extends Activity {
         historyList = (ListView) findViewById(R.id.history_list);
         ListItemLongClickListener listItemLongClickListener = new ListItemLongClickListener();
         favoriteList.setOnItemLongClickListener(listItemLongClickListener);
+        ListItemClickListener listItemClickListener = new ListItemClickListener();
+        favoriteList.setOnItemClickListener(listItemClickListener);
 
         initData();
     }
@@ -117,6 +120,29 @@ public class FavoriteHistoryActivity extends Activity {
             }
             return false;
         }
+    }
+
+    private class ListItemClickListener implements AdapterView.OnItemClickListener {
+
+        @Override
+        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+            switch (parent.getId()) {
+                case R.id.favorite_list:
+                    Intent intent = new Intent();
+                    intent.putExtra("url", ((TextView) view.findViewById(R.id.item_url)).getText().toString());
+                    setResult(0, intent);
+                    finish();
+                    break;
+            }
+        }
+    }
+
+    @Override
+    public void finish() {
+        if (favoriteCursor != null) {
+            favoriteCursor.close();
+        }
+        super.finish();
     }
 
     private class ItemPopupOnClickListener implements View.OnClickListener {

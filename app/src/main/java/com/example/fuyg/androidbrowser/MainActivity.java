@@ -302,6 +302,16 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        switch (requestCode) {
+            case 0:
+                browser.loadUrl(data.getStringExtra("url"));
+                break;
+        }
+    }
+
     private class ButtonClickedListener implements View.OnClickListener {
         @Override
         public void onClick(View view) {
@@ -364,7 +374,7 @@ public class MainActivity extends AppCompatActivity {
                     if (toolsPopupWindow != null) {
                         toolsPopupWindow.dismiss();
                     }
-                    startActivity(new Intent(MainActivity.this, FavoriteHistoryActivity.class));
+                    startActivityForResult(new Intent(MainActivity.this, FavoriteHistoryActivity.class), 0);
                     break;
                 case R.id.web_url_show_favorite:
 
