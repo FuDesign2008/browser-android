@@ -77,32 +77,34 @@
                     android:layout_width="24dp"
                     android:layout_height="24dp"
                     android:layout_margin="5dp"
-                    android:background="@drawable/favorites_button"
-                    />
-               <ImageView
-                   android:id="@+id/url_divider"
-                   android:layout_width="2dp"
-                   android:layout_height="27dp"
-                   android:layout_marginTop="5dp"
-                   android:contentDescription="@string/url_divider"/>
+                    android:background="@drawable/favorites_button" />
+
+                <ImageView
+                    android:id="@+id/url_divider"
+                    android:layout_width="2dp"
+                    android:layout_height="27dp"
+                    android:layout_marginTop="5dp"
+                    android:contentDescription="@string/url_divider" />
+
                 <TextView
                     android:id="@+id/web_url_show_title"
                     android:layout_width="190dp"
                     android:layout_height="27dp"
                     android:layout_margin="5dp"
-                    android:hint="@string/webUrlHint"/>
+                    android:hint="@string/webUrlHint" />
+
                 <ImageView
                     android:layout_width="32dp"
                     android:layout_height="25dp"
                     android:layout_marginTop="5dp"
                     android:background="@drawable/search_button"
-                    android:contentDescription="@string/url_divider"
-                    />
+                    android:contentDescription="@string/url_divider" />
+
                 <TextView
                     android:layout_width="30dp"
                     android:layout_height="27dp"
                     android:layout_marginTop="5dp"
-                    android:hint="@string/search"/>
+                    android:hint="@string/search" />
             </LinearLayout>
 
         </LinearLayout>
@@ -138,8 +140,7 @@
             android:layout_height="wrap_content"
             android:layout_centerVertical="true"
             android:layout_marginTop="2dp"
-            android:background="@drawable/pre_button"
-            />
+            android:background="@drawable/pre_button" />
 
         <Button
             android:id="@+id/next_button"
@@ -157,6 +158,7 @@
             android:layout_centerInParent="true"
             android:layout_marginTop="2dp"
             android:background="@drawable/tools_button" />
+
         <Button
             android:id="@+id/window_button"
             android:layout_width="60dp"

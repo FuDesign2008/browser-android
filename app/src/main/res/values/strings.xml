@@ -12,4 +12,11 @@
     <string name="refresh">刷新</string>
     <string name="url_divider">分割线</string>
     <string name="search">搜索</string>
+    <string name="favorite">收藏</string>
+    <string name="history">历史</string>
+    <string name="modify_favorite_item">修改</string>
+    <string name="delete_favorite_item">删除</string>
+    <string name="name">标题</string>
+    <string name="blank" />
+    <string name="url">地址</string>
 </resources>

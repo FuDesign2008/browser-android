@@ -35,7 +35,7 @@ public class ToolsPopupWindow extends PopupWindow {
     }
 
     private void initTab () {
-        toolsTabView = layoutInflater.inflate(R.layout.tools, null);
+        toolsTabView = layoutInflater.inflate(R.layout.tools_popup_window, null);
         tabHost = (TabHost) toolsTabView.findViewById(android.R.id.tabhost);
         tabHost.setup();
 

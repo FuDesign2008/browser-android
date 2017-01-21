@@ -1,16 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TabHost xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@android:id/tabhost"
-    android:orientation="vertical"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:orientation="vertical">
 
     <TabWidget
         android:id="@android:id/tabs"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:textAlignment="viewStart"
-        />
+        android:textAlignment="viewStart" />
 
     <FrameLayout
         android:id="@android:id/tabcontent"
@@ -21,16 +20,22 @@
             android:id="@+id/tools_normal"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:gravity="center"
-            >
+            android:gravity="center">
+
             <Button
                 android:id="@+id/tools_normal_refresh"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignParentBottom="true"
-                android:text="@string/refresh"
-                />
+                android:text="@string/refresh" />
 
+            <Button
+                android:id="@+id/tools_normal_favorite"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentBottom="true"
+                android:layout_toRightOf="@id/tools_normal_refresh"
+                android:text="@string/favorite"/>
 
         </RelativeLayout>
 

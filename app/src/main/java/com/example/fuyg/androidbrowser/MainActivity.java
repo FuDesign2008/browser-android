@@ -1,10 +1,9 @@
 package com.example.fuyg.androidbrowser;
 
-import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.IBinder;
 import android.os.Message;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -342,7 +341,7 @@ public class MainActivity extends AppCompatActivity {
                     }
 
                     LayoutInflater toolsInflater = LayoutInflater.from(getApplicationContext());
-                    View toolsView = toolsInflater.inflate(R.layout.tools, null);
+                    View toolsView = toolsInflater.inflate(R.layout.tools_popup_window, null);
                     toolsPopupWindow.showAtLocation(
                             toolsView,
                             Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL,
@@ -352,12 +351,20 @@ public class MainActivity extends AppCompatActivity {
 
                     Button refresh = (Button) toolsPopupWindow.getView(R.id.tools_normal_refresh);
                     refresh.setOnClickListener(this);
+                    Button favorite = (Button) toolsPopupWindow.getView(R.id.tools_normal_favorite);
+                    favorite.setOnClickListener(this);
                     break;
                 case R.id.tools_normal_refresh:
-                    browser.loadUrl(url);
                     if (toolsPopupWindow != null) {
                         toolsPopupWindow.dismiss();
                     }
+                    browser.loadUrl(url);
+                    break;
+                case R.id.tools_normal_favorite:
+                    if (toolsPopupWindow != null) {
+                        toolsPopupWindow.dismiss();
+                    }
+                    startActivity(new Intent(MainActivity.this, FavoriteHistoryActivity.class));
                     break;
                 case R.id.web_url_show_favorite:
 
@@ -365,8 +372,7 @@ public class MainActivity extends AppCompatActivity {
                         favoriteManager = new FavoriteManager(view.getContext());
                     }
                     favoriteManager.addFavorite(title, url);
-
-                    // for print log
+//                     for print log
                     favoriteManager.getAllFavorites();
                     break;
                 case R.id.web_url_show_title:
