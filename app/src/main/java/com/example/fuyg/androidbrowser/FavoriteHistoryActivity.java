@@ -104,8 +104,7 @@ public class FavoriteHistoryActivity extends Activity {
 
             switch (parentId) {
                 case R.id.favorite_list:
-                    favoriteItemPopupWindow = new FavoriteItemPopupWindow(FavoriteHistoryActivity.this, 200, 400);
-//                    favoriteItemPopupWindow.setBackgroundDrawable(getResources().getDrawable(R.drawable.));
+                    favoriteItemPopupWindow = new FavoriteItemPopupWindow(FavoriteHistoryActivity.this, 200, 330);
                     favoriteItemPopupWindow.showAsDropDown(view, view.getWidth() / 2, view.getHeight() / 2);
                     TextView modify = (TextView) favoriteItemPopupWindow.findViewById(R.id.favorite_item_modify);
                     TextView delete = (TextView) favoriteItemPopupWindow.findViewById(R.id.favorite_item_delete);

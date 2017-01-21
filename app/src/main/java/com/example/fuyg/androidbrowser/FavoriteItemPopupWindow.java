@@ -26,6 +26,7 @@ public class FavoriteItemPopupWindow extends PopupWindow {
         setContentView(popupContentView);
         setOutsideTouchable(true);
         setFocusable(true);
+        setBackgroundDrawable(context.getResources().getDrawable(R.drawable.favorite_popup_background));
     }
 
     public void initTab() {
