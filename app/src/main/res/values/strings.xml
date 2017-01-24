@@ -19,4 +19,11 @@
     <string name="name">标题</string>
     <string name="blank" />
     <string name="url">地址</string>
+    <string name="delete_history_item">删除</string>
+    <string name="delete_history_all">全部删除</string>
+    <string name="viewImage">查看图片</string>
+    <string name="saveImage">保存图片</string>
+    <string name="drawImage">开始涂鸦</string>
+    <string name="viewPropertiesOfImage">查看属性</string>
+    <string name="shareImage">分享图片</string>
 </resources>

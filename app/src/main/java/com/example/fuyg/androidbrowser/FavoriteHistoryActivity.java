@@ -16,25 +16,27 @@ import android.widget.SimpleCursorAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import org.w3c.dom.Text;
-
-import java.util.List;
-
 /**
  * Created by fuyg on 20/01/2017.
  */
 
 public class FavoriteHistoryActivity extends Activity {
 
+    public static final int INTENT_RESULT_DEFAULT = 0;
+    public static final int INTENT_RESULT_URL = 1;
+
     private TextView favorite;
     private TextView history;
     private ListView favoriteList;
     private ListView historyList;
 
-    private FavoriteItemPopupWindow favoriteItemPopupWindow;
-    private FavoriteManager favoriteManager;
+    private ListItemPopupWindow listItemPopupWindow;
+
+    private FavoriteHistoryManager favoriteHistoryManager;
     private Cursor favoriteCursor;
     private ListAdapter favoriteListAdapter;
+    private Cursor historyCursor;
+    private ListAdapter historyListAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,22 +50,28 @@ public class FavoriteHistoryActivity extends Activity {
         favorite.setOnClickListener(tabOnClickListener);
         history.setOnClickListener(tabOnClickListener);
 
-        favoriteList = (ListView) findViewById(R.id.favorite_list);
-        historyList = (ListView) findViewById(R.id.history_list);
         ListItemLongClickListener listItemLongClickListener = new ListItemLongClickListener();
-        favoriteList.setOnItemLongClickListener(listItemLongClickListener);
         ListItemClickListener listItemClickListener = new ListItemClickListener();
+
+        favoriteList = (ListView) findViewById(R.id.favorite_list);
+        favoriteList.setOnItemLongClickListener(listItemLongClickListener);
         favoriteList.setOnItemClickListener(listItemClickListener);
 
+        historyList = (ListView) findViewById(R.id.history_list);
+        historyList.setOnItemLongClickListener(listItemLongClickListener);
+        historyList.setOnItemClickListener(listItemClickListener);
+
         initData();
+
+        setResult(INTENT_RESULT_DEFAULT);
     }
 
     private void initData() {
         if (favoriteCursor != null) {
             favoriteCursor.close();
         }
-        favoriteManager = new FavoriteManager(this);
-        favoriteCursor = favoriteManager.getAllFavorites();
+        favoriteHistoryManager = new FavoriteHistoryManager(this);
+        favoriteCursor = favoriteHistoryManager.getAllFavority();
         favoriteListAdapter = new SimpleCursorAdapter(
                 getApplicationContext(),
                 R.layout.list_item,
@@ -71,8 +79,23 @@ public class FavoriteHistoryActivity extends Activity {
                 new String[]{"_id", "name", "url"},
                 new int[]{R.id.item_id, R.id.item_name, R.id.item_url}
         );
-
         favoriteList.setAdapter(favoriteListAdapter);
+
+        if (historyCursor != null) {
+            historyCursor.close();
+        }
+
+        historyCursor = favoriteHistoryManager.getAllHistory();
+        historyListAdapter = new SimpleCursorAdapter(
+                getApplicationContext(),
+                R.layout.list_item,
+                historyCursor,
+                new String[]{"_id", "name", "url", "date"},
+                new int[]{R.id.item_id, R.id.item_name, R.id.item_url, R.id.item_date}
+        );
+        historyList.setAdapter(historyListAdapter);
+
+
     }
 
     @Override
@@ -90,8 +113,16 @@ public class FavoriteHistoryActivity extends Activity {
             int id = v.getId();
             switch (id) {
                 case R.id.favorite_and_history_favorite:
+                    if (!favoriteList.isShown()) {
+                        favoriteList.setVisibility(View.VISIBLE);
+                        historyList.setVisibility(View.GONE);
+                    }
                     break;
                 case R.id.favorite_and_history_history:
+                    if (!historyList.isShown()) {
+                        favoriteList.setVisibility(View.GONE);
+                        historyList.setVisibility(View.VISIBLE);
+                    }
                     break;
 
             }
@@ -106,17 +137,28 @@ public class FavoriteHistoryActivity extends Activity {
             int parentId = parent.getId();
 
             switch (parentId) {
-                case R.id.favorite_list:
-                    favoriteItemPopupWindow = new FavoriteItemPopupWindow(FavoriteHistoryActivity.this, 200, 330);
-                    favoriteItemPopupWindow.showAsDropDown(view, view.getWidth() / 2, view.getHeight() / 2);
-                    TextView modify = (TextView) favoriteItemPopupWindow.findViewById(R.id.favorite_item_modify);
-                    TextView delete = (TextView) favoriteItemPopupWindow.findViewById(R.id.favorite_item_delete);
-                    ItemPopupOnClickListener itemPopupOnClickListener = new ItemPopupOnClickListener(view);
-                    modify.setOnClickListener(itemPopupOnClickListener);
-                    delete.setOnClickListener(itemPopupOnClickListener);
-                    break;
-                case R.id.history_list:
-                    break;
+                case R.id.favorite_list: {
+                    listItemPopupWindow = new ListItemPopupWindow(FavoriteHistoryActivity.this,
+                            ListItemPopupWindow.FAVORITE_ITEM_VIEW, 200, 330);
+                    listItemPopupWindow.showAsDropDown(view, view.getWidth() / 2, view.getHeight() / 2);
+                    TextView modify = (TextView) listItemPopupWindow.findViewById(R.id.favorite_item_modify);
+                    TextView delete = (TextView) listItemPopupWindow.findViewById(R.id.favorite_item_delete);
+                    PopupItemOnClickListener popupItemOnClickListener = new PopupItemOnClickListener(view);
+                    modify.setOnClickListener(popupItemOnClickListener);
+                    delete.setOnClickListener(popupItemOnClickListener);
+                }
+                break;
+                case R.id.history_list: {
+                    listItemPopupWindow = new ListItemPopupWindow(FavoriteHistoryActivity.this,
+                            ListItemPopupWindow.HISTORY_ITEM_VIEW, 200, 330);
+                    listItemPopupWindow.showAsDropDown(view, view.getWidth() / 2, view.getHeight() / 2);
+                    TextView delete = (TextView) listItemPopupWindow.findViewById(R.id.history_item_delete);
+                    TextView deleteAll = (TextView) listItemPopupWindow.findViewById(R.id.history_item_delete_all);
+                    PopupItemOnClickListener popupItemOnClickListener = new PopupItemOnClickListener(view);
+                    delete.setOnClickListener(popupItemOnClickListener);
+                    deleteAll.setOnClickListener(popupItemOnClickListener);
+                }
+                break;
             }
             return false;
         }
@@ -127,12 +169,21 @@ public class FavoriteHistoryActivity extends Activity {
         @Override
         public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
             switch (parent.getId()) {
-                case R.id.favorite_list:
+                case R.id.favorite_list: {
                     Intent intent = new Intent();
                     intent.putExtra("url", ((TextView) view.findViewById(R.id.item_url)).getText().toString());
-                    setResult(0, intent);
+                    setResult(INTENT_RESULT_URL, intent);
+                    finish();
+                }
+                break;
+                case R.id.history_list: {
+                    Intent intent = new Intent();
+                    intent.putExtra("url", ((TextView) view.findViewById(R.id.item_url)).getText().toString());
+                    setResult(INTENT_RESULT_URL, intent);
                     finish();
                     break;
+                }
+
             }
         }
     }
@@ -145,13 +196,13 @@ public class FavoriteHistoryActivity extends Activity {
         super.finish();
     }
 
-    private class ItemPopupOnClickListener implements View.OnClickListener {
+    private class PopupItemOnClickListener implements View.OnClickListener {
 
         private String itemId;
         private String itemName;
         private String itemUrl;
 
-        public ItemPopupOnClickListener(View item) {
+        public PopupItemOnClickListener(View item) {
             itemId = ((TextView) item.findViewById(R.id.item_id)).getText().toString();
             itemName = ((TextView) item.findViewById(R.id.item_name)).getText().toString();
             itemUrl = ((TextView) item.findViewById(R.id.item_url)).getText().toString();
@@ -159,7 +210,7 @@ public class FavoriteHistoryActivity extends Activity {
 
         @Override
         public void onClick(View v) {
-            favoriteItemPopupWindow.dismiss();
+            listItemPopupWindow.dismiss();
             switch (v.getId()) {
                 case R.id.favorite_item_modify:
                     LayoutInflater modifyFavoriteInflater = LayoutInflater.from(FavoriteHistoryActivity.this);
@@ -171,11 +222,11 @@ public class FavoriteHistoryActivity extends Activity {
                     new AlertDialog.Builder(FavoriteHistoryActivity.this)
                             .setTitle("编辑书签")
                             .setView(modifyFavoriteView)
-                            .setPositiveButton("确定", new DialogInterface.OnClickListener(){
+                            .setPositiveButton("确定", new DialogInterface.OnClickListener() {
 
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
-                                    if (favoriteManager.modifyFavorite(itemId,
+                                    if (favoriteHistoryManager.modifyFavorite(itemId,
                                             nameInput.getText().toString(),
                                             urlInput.getText().toString())) {
                                         Toast.makeText(FavoriteHistoryActivity.this, "修改成功", Gravity.BOTTOM).show();
@@ -196,13 +247,52 @@ public class FavoriteHistoryActivity extends Activity {
 
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
-                                    if (favoriteManager.deleteFavorite(itemId)) {
+                                    if (favoriteHistoryManager.deleteFavorite(itemId)) {
                                         Toast.makeText(FavoriteHistoryActivity.this, "删除成功", Gravity.BOTTOM).show();
                                         initData();
                                         favoriteList.invalidate();
 
                                     } else {
                                         Toast.makeText(FavoriteHistoryActivity.this, "删除失败", Gravity.BOTTOM).show();
+                                    }
+                                }
+                            }).setNegativeButton("取消", null)
+                            .create()
+                            .show();
+                    break;
+
+                case R.id.history_item_delete:
+                    new AlertDialog.Builder(FavoriteHistoryActivity.this).setTitle("删除历史记录")
+                            .setMessage("是否要删除名为'" + "'的历史记录?")
+                            .setPositiveButton("删除", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    if (favoriteHistoryManager.deleteHistory(itemId)) {
+                                        Toast.makeText(FavoriteHistoryActivity.this, "删除成功", Gravity.BOTTOM).show();
+                                        initData();
+                                        historyList.invalidate();
+                                    } else {
+                                        Toast.makeText(FavoriteHistoryActivity.this, "删除失败", Gravity.BOTTOM).show();
+                                    }
+
+                                }
+                            }).setNegativeButton("取消", null)
+                            .create()
+                            .show();
+                    break;
+                case R.id.history_item_delete_all:
+                    new AlertDialog.Builder(FavoriteHistoryActivity.this).setTitle("删除全部历史记录")
+                            .setMessage("是否要删除全部的历史记录?")
+                            .setPositiveButton("删除全部", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    if (favoriteHistoryManager.deleteAllHistory()) {
+                                        Toast.makeText(FavoriteHistoryActivity.this, "删除成功", Gravity.BOTTOM).show();
+                                        initData();
+                                        historyList.invalidate();
+                                    } else {
+                                        Toast.makeText(FavoriteHistoryActivity.this, "删除失败", Gravity.BOTTOM).show();
+
                                     }
                                 }
                             }).setNegativeButton("取消", null)

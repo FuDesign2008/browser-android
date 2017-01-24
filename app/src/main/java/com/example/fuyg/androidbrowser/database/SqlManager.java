@@ -23,6 +23,7 @@ public class SqlManager extends SQLiteOpenHelper implements IDatabase {
     @Override
     public void onCreate(SQLiteDatabase sqLiteDatabase) {
         sqLiteDatabase.execSQL(SqlStr.CTEATE_TABLE_FAVORITE);
+        sqLiteDatabase.execSQL(SqlStr.CTEATE_TABLE_HISTORY);
     }
 
     @Override
@@ -31,42 +32,57 @@ public class SqlManager extends SQLiteOpenHelper implements IDatabase {
     }
 
     @Override
-    public boolean addFavorite(SQLiteDatabase sqLiteDatabase, String name, String url) throws SQLException {
+    public boolean add(SQLiteDatabase sqLiteDatabase, String tableName, String name, String url, long date) throws SQLException {
         ContentValues contentValues = new ContentValues();
         contentValues.put("name", name);
         contentValues.put("url", url);
 
-        long id = sqLiteDatabase.insert(SqlStr.TABLE_FAVORITE_NAME, null, contentValues);
+        if (tableName.equals(SqlStr.TABLE_HISTORY_NAME)) {
+            contentValues.put("date", date);
+        }
+
+        long id = sqLiteDatabase.insert(tableName, null, contentValues);
         return id >-1;
     }
 
     @Override
-    public boolean deleteFavorite(SQLiteDatabase sqLiteDatabase, String id) {
+    public boolean delete(SQLiteDatabase sqLiteDatabase, String tableName, String id) {
         Log.d(TAG, "delete id: " + id);
-        int count = sqLiteDatabase.delete(SqlStr.TABLE_FAVORITE_NAME, "id=?", new String[]{id});
+        int count = sqLiteDatabase.delete(tableName, "id=?", new String[]{id});
         Log.d(TAG, "delete id: " + id + " result: " + count);
 
         return count > 0;
     }
 
     @Override
-    public boolean modifyFavorite(SQLiteDatabase sqLiteDatabase, String id, String name, String url) {
+    public boolean modify(SQLiteDatabase sqLiteDatabase, String tableName, String id, String name, String url) {
         ContentValues contentValues = new ContentValues();
         contentValues.put("name", name);
         contentValues.put("url", url);
         Log.d(TAG, "modify id:" + id + " name: " + name + " url: " + url);
-        int count = sqLiteDatabase.update(SqlStr.TABLE_FAVORITE_NAME, contentValues, "id=?", new String[]{id});
+        int count = sqLiteDatabase.update(tableName, contentValues, "id=?", new String[]{id});
         return count > 0;
     }
 
     @Override
-    public Cursor getAllFavorite(SQLiteDatabase sqLiteDatabase) {
-        String[] returnColumns = new String[] {
-                "id as _id",
-                "name",
-                "url"
-        };
-        Cursor result = sqLiteDatabase.query(SqlStr.TABLE_FAVORITE_NAME, returnColumns, null, null, null, null, "id");
+    public Cursor getAll(SQLiteDatabase sqLiteDatabase, String tableName) {
+        String[] returnColumns = null;
+        if (tableName.equals(SqlStr.TABLE_HISTORY_NAME)) {
+            returnColumns = new String[] {
+                    "id as _id",
+                    "name",
+                    "url",
+                    "date"
+            };
+        } else {
+            returnColumns = new String[] {
+                    "id as _id",
+                    "name",
+                    "url"
+            };
+        }
+        Cursor result = sqLiteDatabase.query(tableName, returnColumns, null, null, null, null, "id");
+        result.moveToFirst();
 
         while (result.moveToNext()) {
             long id = result.getInt(result.getColumnIndex("_id"));
@@ -76,12 +92,20 @@ public class SqlManager extends SQLiteOpenHelper implements IDatabase {
             Log.d(TAG, "id: " + id + ", name: " + name + ", url:" + url);
         }
 
+        result.moveToFirst();
         return result;
     }
 
     @Override
-    public boolean multiplyFavorite(SQLiteDatabase sqLiteDatabase, String url) {
-        Cursor cursor = sqLiteDatabase.query(SqlStr.TABLE_FAVORITE_NAME, null, "url=?", new  String[]{url}, null, null, null);
+    public boolean deleteAll(SQLiteDatabase sqLiteDatabase, String tableName) {
+        int count = sqLiteDatabase.delete(tableName, null, null);
+        return count != 0;
+    }
+
+    @Override
+    public boolean isExist(SQLiteDatabase sqLiteDatabase, String tableName, String url) {
+        Cursor cursor = sqLiteDatabase.query(tableName, null, "url=?", new  String[]{url}, null, null, null);
+        cursor.moveToFirst();
 
         while (cursor.moveToNext()) {
             long id = cursor.getInt(cursor.getColumnIndex("id"));

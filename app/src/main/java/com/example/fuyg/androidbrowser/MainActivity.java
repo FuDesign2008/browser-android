@@ -23,12 +23,22 @@ import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import org.w3c.dom.Text;
+import org.xml.sax.helpers.AttributeListImpl;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
+
+import static android.widget.ListPopupWindow.WRAP_CONTENT;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -76,7 +86,7 @@ public class MainActivity extends AppCompatActivity {
 
     private String url = "";
     private String title = "";
-    private FavoriteManager favoriteManager;
+    private FavoriteHistoryManager favoriteHistoryManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -85,15 +95,19 @@ public class MainActivity extends AppCompatActivity {
 
         browser = (WebView) findViewById(R.id.browser);
         settings = browser.getSettings();
+        settings.setDefaultTextEncodingName("UTF-8");
+        settings.setJavaScriptEnabled(true);
+
         client = new BrowserClient();
         browser.setWebViewClient(client);
         chromeClient = new BrowserChromeClient();
         browser.setWebChromeClient(chromeClient);
+
         gestureListener = new GestureListener();
         gestureDetector = new GestureDetector(this, gestureListener);
         browser.setOnTouchListener(new WebViewTouchListener());
-        settings.setDefaultTextEncodingName("UTF-8");
-        settings.setJavaScriptEnabled(true);
+        browser.setOnLongClickListener(new WebViewOnLongClickedListener());
+
 
         buttonClickedListener = new ButtonClickedListener();
         webUrlInputChangedListener = new WebUrlInputChangedListener();
@@ -150,8 +164,7 @@ public class MainActivity extends AppCompatActivity {
         windowButton.setOnClickListener(buttonClickedListener);
         homeButton.setOnClickListener(buttonClickedListener);
 
-
-
+        favoriteHistoryManager = new FavoriteHistoryManager(this);
     }
 
     private void changeStateOfWebUrlLayout(boolean showInput) {
@@ -205,7 +218,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-
     @Override
     public void onBackPressed() {
         if (browser.canGoBack()) {
@@ -250,7 +262,7 @@ public class MainActivity extends AppCompatActivity {
                     break;
                 case WebViewClient.ERROR_UNSUPPORTED_AUTH_SCHEME:
                     new AlertDialog.Builder(MainActivity.this).setTitle("警告")
-                            .setMessage("不支持的sheme: " + failingUrl)
+                            .setMessage("不支持的scheme: " + failingUrl)
                             .create()
                             .show();
                     break;
@@ -266,6 +278,8 @@ public class MainActivity extends AppCompatActivity {
             webUrlLayoutShow.setVisibility(View.GONE);
 
             changeStateOfBottomToolbar();
+
+            favoriteHistoryManager.addHistory(webUrlTitle.getText().toString(), url, (new Date()).getTime());
         }
     }
 
@@ -277,6 +291,72 @@ public class MainActivity extends AppCompatActivity {
                 return gestureDetector.onTouchEvent(motionEvent);
             }
             return false;
+        }
+    }
+
+    private class WebViewOnLongClickedListener implements View.OnLongClickListener {
+        @Override
+        public boolean onLongClick(View v) {
+            WebView.HitTestResult result = ((WebView) v).getHitTestResult();
+            if (null == result) {
+                return false;
+            }
+            int type = result.getType();
+            if (type == WebView.HitTestResult.UNKNOWN_TYPE) {
+                return false;
+            }
+            switch (type) {
+                case WebView.HitTestResult.PHONE_TYPE:
+                    // TODO
+                    Log.d(TAG, "phone type");
+                    break;
+                case WebView.HitTestResult.EMAIL_TYPE:
+                    // TODO
+                    Log.d(TAG, "email type");
+                    break;
+                case WebView.HitTestResult.GEO_TYPE:
+                    // TODO
+                    Log.d(TAG, "geo type");
+                    break;
+                case WebView.HitTestResult.SRC_ANCHOR_TYPE:
+                    // TODO
+                    Log.d(TAG, "anchor type");
+                    break;
+                case WebView.HitTestResult.SRC_IMAGE_ANCHOR_TYPE:
+                case WebView.HitTestResult.IMAGE_TYPE:
+                    Log.d(TAG, "src image anchor or image type");
+                    ListItemPopupWindow popupWindow = new ListItemPopupWindow(
+                            MainActivity.this,
+                            ListItemPopupWindow.IMAGE_HIT_TEST,
+                            WRAP_CONTENT,
+                            WRAP_CONTENT);
+                    popupWindow.showAtLocation(v, Gravity.TOP | Gravity.LEFT, PointXY.getX(), PointXY.getY() + 10);
+                    TextView viewImage = (TextView) popupWindow.findViewById(R.id.image_hit_test_view_image);
+                    TextView saveImage = (TextView) popupWindow.findViewById(R.id.image_hit_test_save_image);
+                    TextView viewPropertiesOfImage = (TextView) popupWindow.findViewById(R.id.image_hit_test_view_properties_of_image);
+                    ImagePopupMenuOnClickListener listener = new ImagePopupMenuOnClickListener(type, result.getExtra());
+                    viewImage.setOnClickListener(listener);
+                    saveImage.setOnClickListener(listener);
+                    viewPropertiesOfImage.setOnClickListener(listener);
+                    break;
+                default:
+                    break;
+            }
+
+            return true;
+        }
+    }
+
+    private static class PointXY {
+        public static int x;
+        public static int y;
+
+        public static int getX() {
+            return x;
+        }
+
+        public static int getY() {
+            return y;
         }
     }
 
@@ -304,12 +384,12 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        switch (requestCode) {
-            case 0:
+        switch (resultCode) {
+            case FavoriteHistoryActivity.INTENT_RESULT_URL:
                 browser.loadUrl(data.getStringExtra("url"));
                 break;
         }
+        super.onActivityResult(requestCode, resultCode, data);
     }
 
     private class ButtonClickedListener implements View.OnClickListener {
@@ -374,22 +454,49 @@ public class MainActivity extends AppCompatActivity {
                     if (toolsPopupWindow != null) {
                         toolsPopupWindow.dismiss();
                     }
-                    startActivityForResult(new Intent(MainActivity.this, FavoriteHistoryActivity.class), 0);
+                    startActivityForResult(new Intent(MainActivity.this, FavoriteHistoryActivity.class), FavoriteHistoryActivity.INTENT_RESULT_URL);
                     break;
                 case R.id.web_url_show_favorite:
 
-                    if (favoriteManager == null) {
-                        favoriteManager = new FavoriteManager(view.getContext());
-                    }
-                    favoriteManager.addFavorite(title, url);
+                    favoriteHistoryManager.addFavorite(title, url);
 //                     for print log
-                    favoriteManager.getAllFavorites();
+                    favoriteHistoryManager.getAllFavority();
                     break;
                 case R.id.web_url_show_title:
                     changeStateOfWebUrlLayout(true);
                     break;
             }
 
+        }
+    }
+
+    private class ImagePopupMenuOnClickListener implements View.OnClickListener {
+        private int type;
+        private String value;
+
+        ImagePopupMenuOnClickListener (int type, String value) {
+            this.type = type;
+            this.value = value;
+        }
+        @Override
+        public void onClick(View v) {
+            switch (v.getId()) {
+                case R.id.image_hit_test_view_image:
+                    // TODO
+                    break;
+                case R.id.image_hit_test_save_image:
+                    // TODO
+                    break;
+                case R.id.image_hit_test_view_properties_of_image:
+                    // TODO
+                    break;
+                case R.id.image_hit_test_draw_image:
+                    // TODO
+                    break;
+                case R.id.image_hit_test_share_image:
+                    // TODO
+                    break;
+            }
         }
     }
 
@@ -443,7 +550,8 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void onLongPress(MotionEvent motionEvent) {
-            // TODO
+            PointXY.x = (int) motionEvent.getX();
+            PointXY.y = (int) motionEvent.getY();
         }
 
         @Override

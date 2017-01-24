@@ -9,16 +9,19 @@ import android.database.sqlite.SQLiteDatabase;
 
 public interface IDatabase {
 
-    public boolean addFavorite(SQLiteDatabase sqLiteDatabase, String name, String url);
+    public boolean add(SQLiteDatabase sqLiteDatabase, String tableName, String name, String url, long date);
 
-    public boolean deleteFavorite(SQLiteDatabase sqLiteDatabase, String id);
+    public boolean delete(SQLiteDatabase sqLiteDatabase, String tableName, String id);
 
-    public boolean modifyFavorite(SQLiteDatabase sqLiteDatabase, String id, String name, String url);
+    public boolean deleteAll(SQLiteDatabase sqLiteDatabase, String tableName);
 
-    public Cursor getAllFavorite(SQLiteDatabase sqLiteDatabase);
+    public boolean modify(SQLiteDatabase sqLiteDatabase, String tableName, String id, String name, String url);
 
-    public boolean multiplyFavorite(SQLiteDatabase sqLiteDatabase, String url);
+    public Cursor getAll(SQLiteDatabase sqLiteDatabase, String tableName);
+
+    public boolean isExist(SQLiteDatabase sqLiteDatabase, String tableName, String url);
 
     void transactionAround(boolean readOnly, Callback callback);
+
 
 }
