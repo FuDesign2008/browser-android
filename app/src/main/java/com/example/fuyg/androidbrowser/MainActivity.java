@@ -456,12 +456,15 @@ public class MainActivity extends AppCompatActivity {
                     }
                     startActivityForResult(new Intent(MainActivity.this, FavoriteHistoryActivity.class), FavoriteHistoryActivity.INTENT_RESULT_URL);
                     break;
-                case R.id.web_url_show_favorite:
-
-                    favoriteHistoryManager.addFavorite(title, url);
+                case R.id.web_url_show_favorite: {
+                    boolean success = favoriteHistoryManager.addFavorite(title, url);
+                    String msg = success ? "收藏成功" : "收藏失败";
+                    Toast.makeText(MainActivity.this, msg, Toast.LENGTH_SHORT).show();
 //                     for print log
                     favoriteHistoryManager.getAllFavority();
                     break;
+                }
+
                 case R.id.web_url_show_title:
                     changeStateOfWebUrlLayout(true);
                     break;
