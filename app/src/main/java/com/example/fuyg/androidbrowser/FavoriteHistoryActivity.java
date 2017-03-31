@@ -22,8 +22,6 @@ import android.widget.Toast;
 
 public class FavoriteHistoryActivity extends Activity {
 
-    public static final int INTENT_RESULT_DEFAULT = 0;
-    public static final int INTENT_RESULT_URL = 1;
 
     private TextView favorite;
     private TextView history;
@@ -63,7 +61,7 @@ public class FavoriteHistoryActivity extends Activity {
 
         initData();
 
-        setResult(INTENT_RESULT_DEFAULT);
+        setResult(IntentCode.RESULT_FAVORITE_HISTORY_NULL);
     }
 
     private void initData() {
@@ -172,14 +170,14 @@ public class FavoriteHistoryActivity extends Activity {
                 case R.id.favorite_list: {
                     Intent intent = new Intent();
                     intent.putExtra("url", ((TextView) view.findViewById(R.id.item_url)).getText().toString());
-                    setResult(INTENT_RESULT_URL, intent);
+                    setResult(IntentCode.RESULT_FAVORITE_HISTORY_URL, intent);
                     finish();
                 }
                 break;
                 case R.id.history_list: {
                     Intent intent = new Intent();
                     intent.putExtra("url", ((TextView) view.findViewById(R.id.item_url)).getText().toString());
-                    setResult(INTENT_RESULT_URL, intent);
+                    setResult(IntentCode.RESULT_FAVORITE_HISTORY_URL, intent);
                     finish();
                     break;
                 }

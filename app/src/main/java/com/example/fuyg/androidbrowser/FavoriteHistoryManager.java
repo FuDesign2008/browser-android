@@ -18,33 +18,35 @@ public class FavoriteHistoryManager {
 
     private static final String TAG = "FavoriteHistoryManager";
 
+
     private IDatabase database;
     private boolean flag = false;
+    private IDatabase.AddResult addResult = IDatabase.AddResult.FAIL;
     private Cursor resultCursor;
 
     public FavoriteHistoryManager(Context context) {
         database = new SqlManager(context, SqlStr.FAVORITE_HISTORY_DB_NAME, null, 1);
     }
 
-    public boolean addFavorite(final String name, final String url) {
+    public IDatabase.AddResult addFavorite(final String name, final String url) {
         if (url == null || url.isEmpty() || name == null ||name.isEmpty()) {
-            return false;
+            return IDatabase.AddResult.FAIL;
         }
 
-        flag = false;
+        addResult = IDatabase.AddResult.FAIL;
         database.transactionAround(false, new Callback() {
             @Override
             public void doSomething(SQLiteDatabase sqLiteDatabase) {
                 boolean hasMultiple = database.isExist(sqLiteDatabase, SqlStr.TABLE_FAVORITE_NAME, url);
                 if (hasMultiple) {
                     Log.d(TAG, "url already in data base: " + url);
-                    flag = false;
+                    addResult = IDatabase.AddResult.ALREADY_EXIST;
                 } else {
-                    flag = database.add(sqLiteDatabase, SqlStr.TABLE_FAVORITE_NAME, name, url, 0);
+                    addResult = database.add(sqLiteDatabase, SqlStr.TABLE_FAVORITE_NAME, name, url, 0);
                 }
             }
         });
-        return flag;
+        return addResult;
     }
 
     public boolean deleteFavorite(final String id) {
@@ -86,27 +88,20 @@ public class FavoriteHistoryManager {
         return resultCursor;
     }
 
-    public boolean addHistory(final String name, final String url, final long date) {
+    public IDatabase.AddResult addHistory(final String name, final String url, final long date) {
         if (url == null || url.isEmpty() || name == null || name.isEmpty()) {
-            return false;
+            return IDatabase.AddResult.FAIL;
         }
 
-        flag = false;
-
+        addResult = IDatabase.AddResult.FAIL;
         database.transactionAround(false, new Callback() {
             @Override
             public void doSomething(SQLiteDatabase sqLiteDatabase) {
-                boolean isExist = database.isExist(sqLiteDatabase, SqlStr.TABLE_HISTORY_NAME, url);
-                if (isExist) {
-                    Log.d(TAG, "url is already in data base: " + url);
-                    flag = false;
-                } else {
-                    flag = database.add(sqLiteDatabase, SqlStr.TABLE_HISTORY_NAME, name, url, date);
-                }
+                addResult = database.add(sqLiteDatabase, SqlStr.TABLE_HISTORY_NAME, name, url, date);
             }
         });
 
-        return flag;
+        return addResult;
     }
 
     public boolean deleteHistory(final String id) {

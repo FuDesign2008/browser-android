@@ -26,4 +26,14 @@
     <string name="drawImage">开始涂鸦</string>
     <string name="viewPropertiesOfImage">查看属性</string>
     <string name="shareImage">分享图片</string>
+    <string name="file_name">文件名称</string>
+    <string name="save_path">保存路径</string>
+    <string name="default_path">默认路径</string>
+    <string name="file_manager_item_icon">图标</string>
+    <string name="file_manager_create_dir">新建</string>
+    <string name="file_manager_title">选择存储目录</string>
+    <string name="sure">确定</string>
+    <string name="cancel">取消</string>
+    <string name="file_manager_item_delete_folder">删除</string>
+    <string name="file_manager_item_rename_folder">重命名</string>
 </resources>

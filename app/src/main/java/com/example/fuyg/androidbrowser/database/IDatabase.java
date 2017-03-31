@@ -9,7 +9,14 @@ import android.database.sqlite.SQLiteDatabase;
 
 public interface IDatabase {
 
-    public boolean add(SQLiteDatabase sqLiteDatabase, String tableName, String name, String url, long date);
+
+    public enum AddResult {
+        SUCCESS,
+        ALREADY_EXIST,
+        FAIL
+    }
+
+    public AddResult add(SQLiteDatabase sqLiteDatabase, String tableName, String name, String url, long date);
 
     public boolean delete(SQLiteDatabase sqLiteDatabase, String tableName, String id);
 

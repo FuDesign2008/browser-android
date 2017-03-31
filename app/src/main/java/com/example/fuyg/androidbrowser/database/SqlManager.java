@@ -32,7 +32,10 @@ public class SqlManager extends SQLiteOpenHelper implements IDatabase {
     }
 
     @Override
-    public boolean add(SQLiteDatabase sqLiteDatabase, String tableName, String name, String url, long date) throws SQLException {
+    public AddResult add(SQLiteDatabase sqLiteDatabase, String tableName, String name, String url, long date) throws SQLException {
+        if (isExist(sqLiteDatabase, tableName, url)) {
+            return AddResult.ALREADY_EXIST;
+        }
         ContentValues contentValues = new ContentValues();
         contentValues.put("name", name);
         contentValues.put("url", url);
@@ -42,7 +45,7 @@ public class SqlManager extends SQLiteOpenHelper implements IDatabase {
         }
 
         long id = sqLiteDatabase.insert(tableName, null, contentValues);
-        return id >-1;
+        return id >-1 ? AddResult.SUCCESS : AddResult.FAIL;
     }
 
     @Override

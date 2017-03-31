@@ -23,7 +23,6 @@ import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
@@ -31,12 +30,9 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import org.w3c.dom.Text;
-import org.xml.sax.helpers.AttributeListImpl;
+import com.example.fuyg.androidbrowser.database.IDatabase;
 
-import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.Locale;
 
 import static android.widget.ListPopupWindow.WRAP_CONTENT;
 
@@ -97,6 +93,8 @@ public class MainActivity extends AppCompatActivity {
         settings = browser.getSettings();
         settings.setDefaultTextEncodingName("UTF-8");
         settings.setJavaScriptEnabled(true);
+        settings.setDatabaseEnabled(true);
+        settings.setDomStorageEnabled(true);
 
         client = new BrowserClient();
         browser.setWebViewClient(client);
@@ -385,7 +383,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         switch (resultCode) {
-            case FavoriteHistoryActivity.INTENT_RESULT_URL:
+            case IntentCode.RESULT_FAVORITE_HISTORY_URL:
                 browser.loadUrl(data.getStringExtra("url"));
                 break;
         }
@@ -454,11 +452,25 @@ public class MainActivity extends AppCompatActivity {
                     if (toolsPopupWindow != null) {
                         toolsPopupWindow.dismiss();
                     }
-                    startActivityForResult(new Intent(MainActivity.this, FavoriteHistoryActivity.class), FavoriteHistoryActivity.INTENT_RESULT_URL);
+                    startActivityForResult(
+                            new Intent(MainActivity.this, FavoriteHistoryActivity.class),
+                            IntentCode.REQUEST_FAVORITE_HISTORY
+                    );
                     break;
                 case R.id.web_url_show_favorite: {
-                    boolean success = favoriteHistoryManager.addFavorite(title, url);
-                    String msg = success ? "收藏成功" : "收藏失败";
+                    IDatabase.AddResult result = favoriteHistoryManager.addFavorite(title, url);
+                    String msg = "";
+                    switch (result) {
+                        case ALREADY_EXIST:
+                            msg = "已存在收藏夹中";
+                            break;
+                        case FAIL:
+                            msg = "收藏失败";
+                            break;
+                        case SUCCESS:
+                            msg = "收藏成功";
+                            break;
+                    }
                     Toast.makeText(MainActivity.this, msg, Toast.LENGTH_SHORT).show();
 //                     for print log
                     favoriteHistoryManager.getAllFavority();
@@ -506,16 +518,17 @@ public class MainActivity extends AppCompatActivity {
     private class WebUrlInputChangedListener implements TextWatcher {
         @Override
         public void afterTextChanged(Editable editable) {
-            // do nothing
+            Log.d(TAG, "after text changed");
         }
 
         @Override
         public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-            // do nothing
+            Log.d(TAG, "before text changed");
         }
 
         @Override
         public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+            Log.d(TAG, "on text changed");
             url = charSequence.toString();
 
             if (!(url.startsWith("http://") || url.startsWith("https://"))) {

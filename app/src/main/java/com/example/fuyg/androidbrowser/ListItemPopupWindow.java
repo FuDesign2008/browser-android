@@ -18,6 +18,7 @@ public class ListItemPopupWindow extends PopupWindow {
     public static final int HISTORY_VIEW = 4;
     public static final int IMAGE_HIT_TEST = 5;
     public static final int ANCHOR_HIT_TEST = 6;
+    public static final int FILE_MANAGER_ITEM = 7;
 
 
     private LayoutInflater layoutInflater;
@@ -59,6 +60,9 @@ public class ListItemPopupWindow extends PopupWindow {
                 popupContentView = layoutInflater.inflate(R.layout.list_item_image_hit_test, null);
                 break;
             case ANCHOR_HIT_TEST:
+                break;
+            case FILE_MANAGER_ITEM:
+                popupContentView = layoutInflater.inflate(R.layout.list_item_file_manager, null);
                 break;
         }
 

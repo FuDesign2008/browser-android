@@ -1,31 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:showDividers="middle"
-    android:divider="?android:dividerVertical"
-    android:background="@drawable/corner_bg"
-    android:layout_margin="5dp">
+    android:layout_margin="5dp"
+    android:orientation="vertical">
 
     <TextView
-        android:id="@+id/favorite_item_modify"
+        android:id="@+id/file_manager_item_delete_folder"
         android:layout_width="match_parent"
         android:layout_height="20dp"
         android:textColor="@android:color/white"
         android:textSize="16sp"
-        android:text="@string/modify_favorite_item"
+        android:text="@string/file_manager_item_delete_folder"
         android:layout_marginLeft="15dp"
         android:layout_marginTop="20dp"
         android:layout_marginBottom="5dp"
         />
     <TextView
-        android:id="@+id/favorite_item_delete"
+        android:id="@+id/file_manager_item_rename_folder"
         android:layout_width="match_parent"
         android:layout_height="20dp"
         android:textColor="@android:color/white"
         android:textSize="16sp"
-        android:text="@string/delete_favorite_item"
+        android:text="@string/file_manager_item_rename_folder"
         android:layout_marginLeft="15dp"
         android:layout_marginTop="20dp"
         android:layout_marginBottom="5dp"
